@@ -97,7 +97,7 @@ def index():
         ]
     })
 
-@app.route('/info', methods=['GET'])
+@app.route('/api/player-info', methods=['GET'])
 def get_player_info():
     try:
         player_id = request.args.get('uid')
