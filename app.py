@@ -4,7 +4,7 @@ import binascii
 from Crypto.Cipher import AES
 from Crypto.Util.Padding import pad, unpad
 from protobuf_decoder.protobuf_decoder import Parser
-from datetime import datetime
+from datetime import datetime, timedelta
 import json
 
 app = Flask(__name__)
@@ -101,8 +101,22 @@ def index():
 def get_player_info():
     try:
         player_id = request.args.get('uid')
-        if not player_id:
-            return jsonify({"Error": [{"message": "Player ID is required"}]}), 400
+        key = request.args.get('key')
+        region = request.args.get('region')
+
+        valid_key = "1yearkeysforujjaiwal"
+
+        # Required fields check
+        if not player_id or not key or not region:
+            return jsonify({"Error": [{"message": "Player ID, Key and Region are required"}]}), 400
+
+        # Region validation
+        if region.lower() != 'ind':
+            return jsonify({"Error": [{"message": "Only 'ind' region is supported"}]}), 400
+
+        # Key validation
+        if key != valid_key:
+            return jsonify({"Error": [{"message": "Invalid key"}]}), 403
 
         jwt_token = get_jwt()
         if not jwt_token:
@@ -157,7 +171,7 @@ def get_player_info():
                 },
                 "Account Overview": {
                     "Booyah Pass Level": player.get("18", {}).get("data", "N/A"),
-                    "Ranked Status": "Heroic",  # Placeholder
+                    "Ranked Status": "Heroic",
                     "Last Active": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                     "Total Matches Played": 1253,
                     "Top 10 Finishes": 564,
@@ -206,7 +220,7 @@ def get_player_info():
                     "Guild ID": guild.get("1", {}).get("data", "Unknown"),
                     "Level": guild.get("4", {}).get("data", "Unknown"),
                     "Members": guild.get("6", {}).get("data", "Unknown"),
-                    "Guild Rank": "Diamond",  # Placeholder
+                    "Guild Rank": "Diamond",
                     "Leader Info": {
                         "Name": leader.get("3", {}).get("data", "Unknown"),
                         "User ID": guild.get("3", {}).get("data", "Unknown"),
@@ -222,7 +236,9 @@ def get_player_info():
                     "Fetched At": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                     "Requested UID": player_id,
                     "API Status": "Success",
-                    "Source": "Free Fire API"
+                    "Source": "Free Fire API",
+                    "Key": key,
+                    "Region": region
                 }
             }
 
@@ -241,6 +257,6 @@ def get_player_info():
             "Error": [{"message": f"An unexpected error occurred: {str(e)}"}]
         }), 500
         
-       # Running the Flask app
+        # Running the Flask app
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
